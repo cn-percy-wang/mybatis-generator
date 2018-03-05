@@ -1,0 +1,85 @@
+<#macro mapperEl value>${r"#{"}${value}}</#macro>
+<#macro enumMapperEl value>${r"#{"}${value}.code}</#macro>
+<#macro targetMapperEl value>${r"#{target."}${value}}</#macro>
+<#assign className = table.className>
+<#assign classNameFirstLower = table.classNameFirstLower>
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+        <!--
+            ${table.remarks} 数据库表操作mybatis映射sql配置文件
+            created by generator on ${now?string('yyyy-MM-dd HH:mm:ss')}
+        -->
+<mapper namespace="${basepackage}.service.mapper.auto.${table.className}Mapper">
+
+<!-- 用于select查询公用抽取的列 -->
+<sql id="${classNameFirstLower}DOFullColumns">
+    <#list table.columns as column>`${column.sqlName}`<#if column_has_next>,
+</#if>
+</#list>
+        </sql>
+
+<resultMap id="${classNameFirstLower}DOResultMap"
+           type="${basepackage}.service.mapper.auto.dataobject.${className}DO">
+<#list table.columns as column>
+<result property="${column.columnNameLower}" column="${column.sqlName}"/>
+</#list>
+        </resultMap>
+
+<insert id="insert"
+        parameterType="${basepackage}.service.mapper.auto.param.${className}InsertParam">
+INSERT INTO ${table.sqlName}
+<trim prefix="(" suffix=")" suffixOverrides=",">
+    <#list table.columns as column>
+    <#if column.insertable && column.columnName != "CreateTime" && column.columnName !=
+    "LastUpdateTime">
+    `${column.sqlName}`,
+</#if>
+</#list>
+        </trim>
+        VALUES
+<trim prefix="(" suffix=")" suffixOverrides=",">
+<#list table.columns as column>
+<#if column.insertable && column.columnName != "CreateTime" && column.columnName !=
+"LastUpdateTime">
+<@mapperEl column.columnNameFirstLower/>,
+</#if>
+        </#list>
+        </trim>
+        </insert>
+
+<select id="selectAll" resultMap="${classNameFirstLower}DOResultMap"
+        parameterType="${table.idColumn.javaType}">
+SELECT
+<include refid="${classNameFirstLower}DOFullColumns"/>
+FROM ${table.sqlName}
+</select>
+
+<select id="selectById" resultMap="${classNameFirstLower}DOResultMap"
+        parameterType="${table.idColumn.javaType}">
+SELECT
+<include refid="${classNameFirstLower}DOFullColumns"/>
+FROM ${table.sqlName}
+WHERE `id` = ${r"#{_parameter}"}
+</select>
+
+<delete id="deleteById" parameterType="${table.idColumn.javaType}">
+DELETE FROM ${table.sqlName}
+WHERE `id` = ${r"#{_parameter}"}
+</delete>
+
+<update id="updateById" parameterType="com.qianhui.common.dao.model.UpdateByIdParam">
+UPDATE ${table.sqlName}
+<set>
+    <#list table.columns as column>
+    <#if column.updatable && column.columnName != "CreateTime" && column.columnName !=
+    "LastUpdateTime" && column.columnName
+    != "Id">
+    `${column.sqlName}` =<@targetMapperEl column.columnNameFirstLower/>,
+</#if>
+</#list>
+        </set>
+        WHERE id = ${r"#{id}"}
+        </update>
+
+        </mapper>
